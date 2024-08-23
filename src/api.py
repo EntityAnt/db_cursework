@@ -4,15 +4,16 @@ import requests
 class HHAPI:
     BASE_URL = "https://api.hh.ru/vacancies"
 
-    def __init__(self, company_name):
+    def __init__(self, company_name: str, page: int = 0):
         self.company_name = company_name
+        self.page = page
 
     def get_vacancies(self):
         params = {
-            'text': f'company:{self.company_name}',
+            'text': self.company_name,
             'area': 113,
-            'per_page': 20,  # Количество вакансий на странице
-            'page': 0  # Номер страницы
+            'per_page': 100,  # Количество вакансий на странице
+            'page': self.page  # Номер страницы
         }
         response = requests.get(self.BASE_URL, params=params)
 
