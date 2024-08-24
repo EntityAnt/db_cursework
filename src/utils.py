@@ -59,6 +59,9 @@ class DBPostgres:
         self.db_name = db_name
         self.params = params
 
+
+
+
     def create_db(self):
         """ Создает базу данных и таблицы. """
 
@@ -75,7 +78,7 @@ class DBPostgres:
 
         with conn.cursor() as cur:
             cur.execute(
-                "CREATE TABLE companies (company_id SERIAL PRIMARY KEY, company_name VARCHAR(255) NOT NULL)")
+                "CREATE TABLE companies (company_id SERIAL PRIMARY KEY, company_name VARCHAR(255) NOT NULL UNIQUE )")
 
         with conn.cursor() as cur:
             cur.execute("""
@@ -102,41 +105,57 @@ class DBPostgres:
         conn = psycopg2.connect(dbname=self.db_name, **self.params)
 
         with conn.cursor() as cur:
-            for vacancy in vacancies:
-                vac_dict = vacancy.__dict__
+            try:
+                for vacancy in vacancies:
 
-                employer = vac_dict.get('employer')
-                cur.execute("INSERT INTO companies (company_name) VALUES (%s) RETURNING company_id", employer)
-                company_id = cur.fetchone()[0]
+                    vac_dict = vacancy.__dict__
+                    company_name = vac_dict.get('employer')
 
-                cur.execute("""
-                    INSERT INTO vacancies (
-                    vacancy_name,
-                    city,
-                    salary_from,
-                    salary_to,
-                    currency,
-                    requirement,
-                    responsibility,
-                    schedule,
-                    employment,
-                    url
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                            (
-                                vac_dict.get('title'),
-                                vac_dict.get('city'),
-                                vac_dict.get('salary_from'),
-                                vac_dict.get('salary_to'),
-                                vac_dict.get('currency'),
-                                vac_dict.get('requirement'),
-                                vac_dict.get('responsibility'),
-                                vac_dict.get('schedule'),
-                                vac_dict.get('employment'),
-                                vac_dict.get('url')
-                            )
-                            )
-        conn.commit()
-        conn.close()
+                    cur.execute("""
+                        INSERT INTO companies (company_name)
+                        VALUES (%s)
+                        ON CONFLICT (company_name) DO NOTHING
+                        RETURNING company_id;
+                        """, (company_name,))
+                    # print(cur.fetchone()[0])
+                    company_id = cur.fetchone()[0]
+
+                    # cur.execute("""INSERT INTO vacancies (company_id) VALUES (%s)""", company_id)
+
+                    cur.execute("""INSERT INTO vacancies (
+                        company_id,
+                        vacancy_name,
+                        city,
+                        salary_from,
+                        salary_to,
+                        currency,
+                        requirement,
+                        responsibility,
+                        schedule,
+                        employment,
+                        url
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                                (
+                                    company_id,
+                                    vac_dict.get('title'),
+                                    vac_dict.get('city'),
+                                    vac_dict.get('salary_from'),
+                                    vac_dict.get('salary_to'),
+                                    vac_dict.get('currency'),
+                                    vac_dict.get('requirement'),
+                                    vac_dict.get('responsibility'),
+                                    vac_dict.get('schedule'),
+                                    vac_dict.get('employment'),
+                                    vac_dict.get('url')
+                                )
+                                )
+                    conn.commit()
+            except Exception as ex:
+                print(ex)
+                conn.rollback()
+            finally:
+                conn.close()
 
 
 if __name__ == '__main__':
