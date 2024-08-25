@@ -1,8 +1,8 @@
 import psycopg2
+from psycopg2 import sql
 
 from config import COMPANY_NAMES
 from src.api import HHAPI
-
 
 from src.vacancy import Vacancy
 
@@ -50,6 +50,34 @@ def get_vacancies_from_hh() -> list[dict]:
     return vacancies
 
 
+def check_database_exists(db_name, user, password, host='localhost', port='5432'):
+    try:
+        # Подключение к серверу PostgreSQL без указания конкретной базы данных
+        connection = psycopg2.connect(
+            dbname='postgres',
+            password=password,
+            host=host,
+            port=port
+        )
+        connection.autocommit = True
+
+        cursor = connection.cursor()
+
+        # Выполнение запроса для проверки существования базы данных
+        cursor.execute(sql.SQL("SELECT 1 FROM pg_database WHERE datname = %s"), [db_name])
+        exists = cursor.fetchone() is not None
+
+        cursor.close()
+
+        return exists
+    except psycopg2.Error as e:
+        print("Ошибка подключения к базе данных:", e)
+        return False
+    finally:
+        if connection:
+            connection.close()
+
+
 def valid_input(message: str) -> int | None:
     """Если возможно, переводит str в int, иначе предлагает ввести число."""
     while True:
@@ -60,7 +88,7 @@ def valid_input(message: str) -> int | None:
             print("Можно ввести только целое число")
 
 
-def main_menu() -> int:
+def submenu() -> int:
     """Реализация главного меню, возвращает номер меню"""
 
     print(
@@ -68,22 +96,20 @@ def main_menu() -> int:
         "2 - Получить список всех компаний и количество вакансий у каждой компании. \n"
         "3 - Получить список всех вакансий.\n"
         "4 - Получить среднюю зарплату по вакансиям.\n"
-        "5 - Получить список вакансий по ключевому слову.\n"
-        "6 - Выход.\n"
+        "5 - Получить список всех вакансий, у которых зарплата выше средней.\n"
+        "6 - Получить список вакансий по ключевым словам.\n"
+        "7 - Выход.\n"
     )
 
     while True:
         answer = input("Выберите действие: ").strip()
         if answer.isdigit():
             answer = int(answer)
-            if 1 <= answer <= 6:
+            if 1 <= answer <= 7:
                 break
             else:
-                print("Можно ввести только число от 1 до 6!")
+                print("Можно ввести только число от 1 до 7!")
         else:
             print("Можно ввести только целое число")
     print("*" * 50)
     return answer
-
-
-

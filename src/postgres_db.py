@@ -11,7 +11,7 @@ class DBPostgres:
         self.params = params
 
     def create_db(self):
-        """ Создает базу данных и таблицы. """
+        """ Создает базу данных."""
 
         """ Подключаемся к  PostgreSQL"""
         conn = psycopg2.connect(dbname='postgres', **self.params)
@@ -23,9 +23,12 @@ class DBPostgres:
         cur.execute(f"CREATE DATABASE {self.db_name};")
         conn.close()
 
-        """ Подключаемся к  PostgreSQL"""
+
+    def create_tables(self):
+        """ Создает таблицы в базе данных."""
+        # Подключаемся к БД
         conn = psycopg2.connect(dbname=self.db_name, **self.params)
-        """ Создаем таблицы"""
+
         with conn.cursor() as cur:
             cur.execute(
                 """CREATE TABLE companies (
