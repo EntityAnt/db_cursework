@@ -1,5 +1,3 @@
-import os
-
 import psycopg2
 
 from config import config, COMPANY_NAMES
@@ -21,13 +19,13 @@ def get_vacancies_from_hh() -> list[dict]:
         employer = item.get('employer')['name']
         for company_name in COMPANY_NAMES:
             if company_name.lower() in employer.lower():
+                employer_url = item.get('employer')['alternate_url']
                 title = item['name']
                 city = item.get("area")["name"]
                 employment = item.get('employment')['name']
                 if item["salary"]:
                     salary = item["salary"]
                     currency = salary.get("currency")
-
                     if salary["from"]:
                         salary_from = salary["from"]
                     else:
@@ -36,7 +34,6 @@ def get_vacancies_from_hh() -> list[dict]:
                         salary_to = salary["to"]
                     else:
                         salary_to = 0
-
                 else:
                     salary_from = 0
                     salary_to = 0
@@ -45,121 +42,7 @@ def get_vacancies_from_hh() -> list[dict]:
                 responsibility = item.get('snippet')['responsibility']
                 schedule = item.get('schedule')['name']
                 url = item['alternate_url']
-                vacancy = Vacancy(employer, title, city, salary_from, salary_to, currency, requirement, responsibility,
-                                  schedule, employment, url)
-                # print(vacancy)
+                vacancy = Vacancy(employer, employer_url, title, city, salary_from, salary_to, currency, requirement,
+                                  responsibility, schedule, employment, url)
                 vacancies.append(vacancy)
     return vacancies
-
-
-class DBPostgres:
-    """ Класс для создания и заполнения БД PostgresSQL. """
-
-    def __init__(self, db_name: str, params: dict):
-        self.db_name = db_name
-        self.params = params
-
-
-
-
-    def create_db(self):
-        """ Создает базу данных и таблицы. """
-
-        conn = psycopg2.connect(dbname='postgres', **self.params)
-        conn.autocommit = True
-        cur = conn.cursor()
-
-        cur.execute(f"DROP DATABASE IF EXISTS {self.db_name};")
-        cur.execute(f"CREATE DATABASE {self.db_name};")
-
-        conn.close()
-
-        conn = psycopg2.connect(dbname=self.db_name, **self.params)
-
-        with conn.cursor() as cur:
-            cur.execute(
-                "CREATE TABLE companies (company_id SERIAL PRIMARY KEY, company_name VARCHAR(255) NOT NULL UNIQUE )")
-
-        with conn.cursor() as cur:
-            cur.execute("""
-                    CREATE TABLE vacancies (
-                        vacancy_id SERIAL PRIMARY KEY,
-                        company_id INT REFERENCES companies(company_id),
-                        vacancy_name VARCHAR NOT NULL,
-                        city VARCHAR(100) NOT NULL,
-                        salary_from INT,
-                        salary_to INT,
-                        currency VARCHAR(5),
-                        requirement TEXT,
-                        responsibility TEXT,
-                        schedule VARCHAR(30),
-                        employment VARCHAR(30),
-                        url TEXT
-                    )""")
-        conn.commit()
-        conn.close()
-
-    def save_data_to_db(self):
-        """ Записывает данные в базу данных."""
-        vacancies = get_vacancies_from_hh()
-        conn = psycopg2.connect(dbname=self.db_name, **self.params)
-
-        with conn.cursor() as cur:
-            try:
-                for vacancy in vacancies:
-
-                    vac_dict = vacancy.__dict__
-                    company_name = vac_dict.get('employer')
-
-                    cur.execute("""
-                        INSERT INTO companies (company_name)
-                        VALUES (%s)
-                        ON CONFLICT (company_name) DO NOTHING
-                        RETURNING company_id;
-                        """, (company_name,))
-                    # print(cur.fetchone()[0])
-                    company_id = cur.fetchone()[0]
-
-                    # cur.execute("""INSERT INTO vacancies (company_id) VALUES (%s)""", company_id)
-
-                    cur.execute("""INSERT INTO vacancies (
-                        company_id,
-                        vacancy_name,
-                        city,
-                        salary_from,
-                        salary_to,
-                        currency,
-                        requirement,
-                        responsibility,
-                        schedule,
-                        employment,
-                        url
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                                (
-                                    company_id,
-                                    vac_dict.get('title'),
-                                    vac_dict.get('city'),
-                                    vac_dict.get('salary_from'),
-                                    vac_dict.get('salary_to'),
-                                    vac_dict.get('currency'),
-                                    vac_dict.get('requirement'),
-                                    vac_dict.get('responsibility'),
-                                    vac_dict.get('schedule'),
-                                    vac_dict.get('employment'),
-                                    vac_dict.get('url')
-                                )
-                                )
-                    conn.commit()
-            except Exception as ex:
-                print(ex)
-                conn.rollback()
-            finally:
-                conn.close()
-
-
-if __name__ == '__main__':
-    params = config()
-    db = DBPostgres('hh_db', params)
-    db.create_db()
-    db.save_data_to_db()

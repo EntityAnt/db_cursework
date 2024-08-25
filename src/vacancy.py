@@ -1,7 +1,8 @@
 class Vacancy:
-    def __init__(self, employer, title, city, salary_from, salary_to, currency, requirement, responsibility, schedule,
+    def __init__(self, employer, employer_url, title, city, salary_from, salary_to, currency, requirement, responsibility, schedule,
                  employment, url):
         self.employer = employer
+        self.employer_url = employer_url
         self.title = title
         self.city: str = city
         self.salary_from = salary_from
@@ -15,6 +16,7 @@ class Vacancy:
 
     def __str__(self):
         return (f"Компания: {self.employer}, "
+                f"Ссылка на компанию: {self.employer_url},"
                 f"Вакансия: {self.title}, "
                 f"Город: {self.city}, "
                 f"Зарплата от: {self.salary_from} до: {self.salary_to} {self.currency}, "

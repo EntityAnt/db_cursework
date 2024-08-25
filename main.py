@@ -1,21 +1,13 @@
-import os
 
-from config import COMPANY_NAMES
-from src.api import HHAPI
-from src.utils import get_vacancies_from_hh
-from src.vacancy import Vacancy
+from config import config
+from src.postgres_db import DBPostgres
 
 
 def main():
-    get_vacancies_from_hh()
-
-    # if vacancies:
-    #     print(f"Найдено {len(vacancies)} вакансий:")
-    #     for vacancy in vacancies:
-    #         print(vacancy.__dict__)
-    #         # print(vacancy)
-    # else:
-    #     print("Вакансий не найдено.")
+    params = config()
+    db = DBPostgres('hh_db', params)
+    db.create_db()
+    db.save_data_to_db()
 
 
 if __name__ == "__main__":
