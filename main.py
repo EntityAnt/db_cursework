@@ -1,13 +1,8 @@
-
-from config import config
-from src.postgres_db import DBPostgres
+from src.user_interaction import user_interaction
 
 
 def main():
-    params = config()
-    db = DBPostgres('hh_db', params)
-    db.create_db()
-    db.save_data_to_db()
+    user_interaction()
 
 
 if __name__ == "__main__":

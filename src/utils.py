@@ -1,7 +1,9 @@
 import psycopg2
 
-from config import config, COMPANY_NAMES
+from config import COMPANY_NAMES
 from src.api import HHAPI
+
+
 from src.vacancy import Vacancy
 
 
@@ -46,3 +48,42 @@ def get_vacancies_from_hh() -> list[dict]:
                                   responsibility, schedule, employment, url)
                 vacancies.append(vacancy)
     return vacancies
+
+
+def valid_input(message: str) -> int | None:
+    """Если возможно, переводит str в int, иначе предлагает ввести число."""
+    while True:
+        count = input(message).strip()
+        if count.isdigit():
+            return int(count)
+        else:
+            print("Можно ввести только целое число")
+
+
+def main_menu() -> int:
+    """Реализация главного меню, возвращает номер меню"""
+
+    print(
+        "1 - Получить вакансии с hh.ru и записать их в БД.\n"
+        "2 - Получить список всех компаний и количество вакансий у каждой компании. \n"
+        "3 - Получить список всех вакансий.\n"
+        "4 - Получить среднюю зарплату по вакансиям.\n"
+        "5 - Получить список вакансий по ключевому слову.\n"
+        "6 - Выход.\n"
+    )
+
+    while True:
+        answer = input("Выберите действие: ").strip()
+        if answer.isdigit():
+            answer = int(answer)
+            if 1 <= answer <= 6:
+                break
+            else:
+                print("Можно ввести только число от 1 до 6!")
+        else:
+            print("Можно ввести только целое число")
+    print("*" * 50)
+    return answer
+
+
+
