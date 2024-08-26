@@ -1,40 +1,41 @@
 from config import config
 from src.db_manager import DBManager
 from src.postgres_db import DBPostgres
-from src.utils import submenu, main_menu, check_database_exists
+from src.utils import check_database_exists, main_menu, submenu
 
 
 def interaction_main_menu() -> DBPostgres:
+    """Функция для взаимодействия с главным меню, возвращает объект типа DBPostgres"""
     while True:
         answer = main_menu()
 
         if answer == 1:
-            db_name = input('Введите название БД: ')
+            db_name = input("Введите название БД: ")
             params = config()
 
             if check_database_exists(db_name):
-                print(f'База данных с именем {db_name} уже существует!')
-                print('*' * 50)
+                print(f"База данных с именем {db_name} уже существует!")
+                print("*" * 50)
             else:
                 db = DBPostgres(db_name, params)
                 db.create_db()
                 db.create_tables()
-                print('*' * 50)
-                print(f'Создана база данных с именем {db_name}!')
-                print('+' * 50)
+                print("*" * 50)
+                print(f"Создана база данных с именем {db_name}!")
+                print("+" * 50)
                 return db
 
         elif answer == 2:
-            db_name = input('Введите название БД: ')
+            db_name = input("Введите название БД: ")
 
             if not check_database_exists(db_name):
-                print(f'База данных с именем {db_name} не существует!')
-                print('*' * 50)
+                print(f"База данных с именем {db_name} не существует!")
+                print("*" * 50)
             else:
                 params = config()
                 db = DBPostgres(db_name, params)
-                print(f'Вы подключились к базе данных с именем {db_name}!')
-                print('*' * 50)
+                print(f"Вы подключились к базе данных с именем {db_name}!")
+                print("*" * 50)
                 return db
 
 
@@ -50,7 +51,7 @@ def user_interaction() -> None:
         if answer == 1:
             db.save_data_to_db()
             print("\nДанные получены и записаны в БД!")
-            print('*' * 50)
+            print("*" * 50)
         elif answer == 2:
             db = DBManager()
             db.get_companies_and_vacancies_count()
@@ -64,7 +65,7 @@ def user_interaction() -> None:
             db = DBManager()
             db.get_vacancies_with_higher_salary()
         elif answer == 6:
-            keywords = input('Введите слова через запятую: ').split(',')
+            keywords = input("Введите слова через запятую: ").split(",")
             db = DBManager()
             db.get_vacancies_with_keyword(keywords)
         elif answer == 7:
