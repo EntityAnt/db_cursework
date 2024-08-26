@@ -1,7 +1,7 @@
 import psycopg2
 from psycopg2 import sql
 
-from config import COMPANY_NAMES
+from config import COMPANY_NAMES, config
 from src.api import HHAPI
 
 from src.vacancy import Vacancy
@@ -50,15 +50,13 @@ def get_vacancies_from_hh() -> list[dict]:
     return vacancies
 
 
-def check_database_exists(db_name, user, password, host='localhost', port='5432'):
+def check_database_exists(db_name: str):
     try:
         # Подключение к серверу PostgreSQL без указания конкретной базы данных
-        connection = psycopg2.connect(
-            dbname='postgres',
-            password=password,
-            host=host,
-            port=port
-        )
+        params = config()
+
+        connection = psycopg2.connect(**params)
+
         connection.autocommit = True
 
         cursor = connection.cursor()
@@ -88,8 +86,29 @@ def valid_input(message: str) -> int | None:
             print("Можно ввести только целое число")
 
 
-def submenu() -> int:
+def main_menu() -> int:
     """Реализация главного меню, возвращает номер меню"""
+    print(
+        "1 - Создать базу данных и таблицы.\n"
+        "2 - Подключится к существующей БД \n"
+
+    )
+    while True:
+        answer = input("Выберите действие: ").strip()
+        if answer.isdigit():
+            answer = int(answer)
+            if 1 <= answer <= 2:
+                break
+            else:
+                print("Можно ввести только число от 1 до 2!")
+        else:
+            print("Можно ввести только целое число")
+    print("*" * 50)
+    return answer
+
+
+def submenu() -> int:
+    """Реализация подменю, возвращает номер меню"""
 
     print(
         "1 - Получить вакансии с hh.ru и записать их в БД.\n"
@@ -98,17 +117,18 @@ def submenu() -> int:
         "4 - Получить среднюю зарплату по вакансиям.\n"
         "5 - Получить список всех вакансий, у которых зарплата выше средней.\n"
         "6 - Получить список вакансий по ключевым словам.\n"
-        "7 - Выход.\n"
+        "7 - Предыдущее меню.\n"
+        "8 - Выход.\n"
     )
 
     while True:
         answer = input("Выберите действие: ").strip()
         if answer.isdigit():
             answer = int(answer)
-            if 1 <= answer <= 7:
+            if 1 <= answer <= 8:
                 break
             else:
-                print("Можно ввести только число от 1 до 7!")
+                print("Можно ввести только число от 1 до 8!")
         else:
             print("Можно ввести только целое число")
     print("*" * 50)
